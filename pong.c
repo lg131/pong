@@ -2,10 +2,13 @@
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
+#include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL.h>
 #include <unistd.h>
 #include <time.h>
 
+
+int gameon = 0;
 
 SDL_Window *window = NULL;
 SDL_Surface *surface = NULL;
@@ -142,9 +145,11 @@ void move_ball(ball_t *r)
 	r->r.x = (int) x;
 
 	if (SDL_HasIntersection((SDL_Rect *) r, &computer_border)) {
+		gameon = 1;
 		player_score++;
 		reset_ball(r);
 	} else if (SDL_HasIntersection((SDL_Rect *) r, &player_border)) {
+		gameon = 1;
 		computer_score++;
 		reset_ball(r);
 	}
@@ -221,28 +226,62 @@ int main(int argc, char *argv[])
 
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
+
+
+	TTF_Init();
+	TTF_Font *font = TTF_OpenFont("sans.ttf", 1150);
+	if (!font) {
+		printf("font not found.\n");
+		return 1;
+	}
+	char msg[7];
+	SDL_Color tcol = {255, 255, 255};
+
 	int gameover = 0;
 	while(!gameover) {
 		SDL_SetRenderDrawColor(renderer, 0x23, 0x2b, 0x2b, 0xff);
 		SDL_RenderClear(renderer);
 
+		if (!gameon) {
 
 
-		SDL_SetRenderDrawColor(renderer, 0x00, 0x66, 0xc5, 0xff);
-		SDL_RenderDrawRect(renderer, (SDL_Rect *) &player);
+			SDL_SetRenderDrawColor(renderer, 0x00, 0x66, 0xc5, 0xff);
+			SDL_RenderDrawRect(renderer, (SDL_Rect *) &player);
 
-		SDL_SetRenderDrawColor(renderer, 0xb8, 0x0f, 0x0a, 0xff);
-		SDL_RenderDrawRect(renderer, (SDL_Rect *) &computer);
+			SDL_SetRenderDrawColor(renderer, 0xb8, 0x0f, 0x0a, 0xff);
+			SDL_RenderDrawRect(renderer, (SDL_Rect *) &computer);
+	
+			SDL_SetRenderDrawColor(renderer, 0xff, 0x66, 0xc5, 0xff);
+			SDL_RenderDrawRect(renderer, (SDL_Rect *) &ball);
+			move_paddle(&player);
+			move_computer(&computer);
+			move_ball(&ball);
 
-		SDL_SetRenderDrawColor(renderer, 0xff, 0x66, 0xc5, 0xff);
-		SDL_RenderDrawRect(renderer, (SDL_Rect *) &ball);
+		} else {
+			sprintf(msg, "%d:%d", player_score, computer_score);
+			SDL_Surface *text = TTF_RenderText_Solid(font, msg, tcol);
+			SDL_Rect trect = {
+				.x = 50,
+				.y = 50, 
+				.w = SCREEN_WIDTH / 2 - 50,
+				.h = SCREEN_HEIGHT / 2- 50, 
+			};
+			SDL_Texture *mst = SDL_CreateTextureFromSurface(renderer, text);
+			SDL_RenderCopy(renderer, mst, NULL, &trect);
+			SDL_FreeSurface(text);
+			SDL_DestroyTexture(mst);
+		}
+
+		if (computer_score > 9 || player_score > 9) {
+			gameover = 1;
+
+		}
 
 
 
 
-		move_paddle(&player);
-		move_computer(&computer);
-		move_ball(&ball);
+
+
 
 
 		while(SDL_PollEvent(&event)) {
@@ -251,14 +290,20 @@ int main(int argc, char *argv[])
 			} else if (event.type == SDL_KEYDOWN) {
 				switch(event.key.keysym.sym) {
 				case SDLK_j:
-					player.a = (double) 1.0 * (double) SCREEN_HEIGHT; 
+					if (!gameon) {
+						player.a = (double) 1.0 * (double) SCREEN_HEIGHT; 
+					}
 					break;
 				case SDLK_k:
-					player.a = (double) -1.0 * (double)  SCREEN_HEIGHT;
+					if (!gameon) {
+						player.a = (double) -1.0 * (double)  SCREEN_HEIGHT;
+					}
+					break;
 				}
 				
 			} else if (event.type == SDL_KEYUP) {
 				player.a = 0;
+				gameon = 0;
 			}
 
 

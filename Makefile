@@ -3,6 +3,7 @@
 
 CFLAGS:=		\
 	-lSDL2		\
+	-lSDL2_ttf	\
 	-Wall		\
 	-lm		\
 	-Og		\
@@ -14,13 +15,13 @@ all: pong breakout bird
 clean:
 	rm *.d *.o pong breakout bird
 
-pong:
+pong: pong.c
 	${CC} ${CFLAGS} pong.c -o $@ 
 
-breakout:
+breakout: breakout.c
 	${CC} ${CFLAGS} breakout.c -o $@ 
 
-bird:
+bird: bird.c
 	${CC} ${CFLAGS} bird.c -o $@ 
 
 

@@ -1,5 +1,6 @@
 
 #include <math.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdint.h>
 #include <string.h>
 #include <SDL2/SDL.h>
@@ -75,6 +76,7 @@ int init(void)
 
 }
 
+int score = 0;
 
 
 
@@ -143,6 +145,7 @@ void reset_pillar(SDL_Rect *r)
 void mv_pillar (SDL_Rect *r)
 {
 	if (r->x < -70) {
+		score++;
 		reset_pillar(r);
 	}
 	double x = r->x;
@@ -154,6 +157,7 @@ void mv_pillar (SDL_Rect *r)
 void mv_column (SDL_Rect *r)
 {
 	if (r->x < -70) {
+		score++;
 		reset_column(r);
 	}
 	r->x -= SCREEN_WIDTH / 2 * t;
@@ -164,11 +168,22 @@ int main(int argc, char *argv[])
 {
 	srandom(time(NULL));
 	SDL_Event event;
+
 	
 	if (init()) {
 		printf("failure.\n");
 		return 1;
 	}
+	TTF_Init();
+
+	TTF_Font *font = TTF_OpenFont("sans.ttf", 200);
+	if (!font) {
+		printf("font not found");
+		return 1;
+	}
+
+	char msg[7];
+	SDL_Color tcol = {255, 255, 255};
 
 	SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
@@ -177,8 +192,24 @@ int main(int argc, char *argv[])
 
 	while(!gameover) {
 
+
 		SDL_SetRenderDrawColor(renderer, 0x23, 0x2b, 0x2b, 0xff);
 		SDL_RenderClear(renderer);
+
+		sprintf(msg, "%d", score);
+		SDL_Surface *text = TTF_RenderText_Solid(font, msg, tcol);
+
+		SDL_Rect trect = {
+			.x = SCREEN_WIDTH / 2,
+			.y = SCREEN_HEIGHT / 2,
+			.h = 200,
+			.w = 100 * strlen(msg)
+		};
+
+		SDL_Texture *mst = SDL_CreateTextureFromSurface(renderer, text);
+		SDL_RenderCopy(renderer, mst, NULL, &trect);
+		SDL_FreeSurface(text);
+		SDL_DestroyTexture(mst);
 
 		SDL_SetRenderDrawColor(renderer, 0xff, 0xfb, 0x2b, 0xff);
 		SDL_RenderDrawRect(renderer, (SDL_Rect *) &bird);
@@ -192,6 +223,11 @@ int main(int argc, char *argv[])
 		mv_bird(&bird);
 		mv_column(&column);
 		mv_pillar(&pillar);
+
+
+
+
+
 
 
 
